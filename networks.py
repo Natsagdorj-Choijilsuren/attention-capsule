@@ -66,7 +66,9 @@ class DigitCapsuleLayer(nn.Module):
         
     def forward(self, x):
 
-        pass
+        batch_size = x.size(0)
+
+        
 
 
     
