@@ -23,7 +23,7 @@ class PrimeCapsuleLayer(nn.Module):
             nn.Conv2d(in_channels = in_channel , out_channels = out_channel, kernel_size = kernel_size,
                       stride = 2, padding = 0)
             for _ in range(caps_dim)])
-
+    
         self.num_routes = num_routes
 
 
@@ -92,10 +92,6 @@ class DigitCapsuleLayer(nn.Module):
 
         return v_j.squeeze(1)
         
-
-
-    
-    
 
 class ConvLayer(nn.Module):
 
