@@ -9,6 +9,7 @@ import torch.nn as nn
 from networks import PrimeCapsuleLayer, DigitCapsuleLayer, ConvLayer, NonLocalLayer
 from torch.optim import Adam
 
+
 class MnistSCAN(nn.Module):
 
     def __init__(self, convlayer, primary_cap, digitcap):
@@ -35,15 +36,16 @@ class MnistSCAN(nn.Module):
 
         return reconst, digit_out
         
-
+    
     def loss(self, ):
 
         pass
 
     
-    def margin_loss(self,):
+    #margin loss 
+    def margin_loss(self, data, x,):
 
-        pass
+        pass 
 
 
     def reconst_loss(self, ):
