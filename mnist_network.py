@@ -9,6 +9,8 @@ import torch.nn as nn
 from networks import PrimeCapsuleLayer, DigitCapsuleLayer, ConvLayer, NonLocalLayer
 from torch.optim import Adam
 
+from dataloader import getMNIST_Loader
+
 
 class MnistSCAN(nn.Module):
 
@@ -38,9 +40,9 @@ class MnistSCAN(nn.Module):
         prime_out = self.prime_layer(nonlocal_out)
         digit_out = self.digit_layer(prime_out)
 
-        reconst = self.recont_layer(digit_out)
+        reconst, masked  = self.recon_layer(digit_out)
 
-        return reconst, digit_out
+        return reconst, digit_out, masked
         
     
    def loss(self, data, x, target, reconstructions):
@@ -70,11 +72,24 @@ class MnistSCAN(nn.Module):
          
         return loss * 0.0005
 
+
+def train(train_loader, optimizer, model):
+
+    for i (data, target) in enumerate(train_loader):
+
+        #data, target = Variable(data), Variable(target)
+        print (data.shape)
+        print (target.shape)
     
 
 if __name__ == '__main__':
 
     mnist_network = MnistSCAN()
 
-    
+    train_loader, test_loader = getMNIST_Loader(batch_size = 100)
 
+    optimizer = torch.optim.Adam(mnist_network.parameters())
+    
+    train(train_loader, optimizer, mnist_network)
+
+    
