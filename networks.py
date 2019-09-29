@@ -19,6 +19,8 @@ class PrimeCapsuleLayer(nn.Module):
     def __init__(self, caps_dim = 8, in_channel = 256, out_channel = 32,
                  num_routes = 32*6*6, kernel_size = 9):
 
+        super(PrimeCapsuleLayer, self).__init__()
+        
         self.capsules = nn.ModuleList([
             nn.Conv2d(in_channels = in_channel , out_channels = out_channel, kernel_size = kernel_size,
                       stride = 2, padding = 0)
@@ -57,7 +59,7 @@ class DigitCapsuleLayer(nn.Module):
         self.incap_dim = incap_dim
         self.outcap_dim = outcap_dim
 
-        self.W = nn.Parameter(torch.randn(1, num_routes, num_capsule))
+        self.W = nn.Parameter(torch.randn(1, num_routes, num_capsule, outcap_dim, incap_dim))
         
     def squash(self, input_tensor):
 
@@ -69,12 +71,13 @@ class DigitCapsuleLayer(nn.Module):
     def forward(self, x):
 
         batch_size = x.size(0)
-        x = torch.stack([x] * self.num_capsules, dim=2).unsqueeze(4)
-
+        x = torch.stack([x] * self.num_capsule, dim=2).unsqueeze(4)
+        
         W = torch.cat([self.W] * batch_size, dim=0)
+        
         u_hat = torch.matmul(W, x)
 
-        b_ij = Variable(torch.zeros(1, self.num_routes, self.num_capsules, 1))
+        b_ij = Variable(torch.zeros(1, self.num_routes, self.num_capsule, 1))
         if USE_CUDA:
             b_ij = b_ij.cuda()
 
@@ -125,7 +128,10 @@ class NonLocalLayer(nn.Module):
         self.h = nn.Conv2d(in_channel, inter_channel,kernel_size = 1,
                            stride = 1)
 
-        self.sotmax_2d = nn.Softmax(dim=1)
+        #self.softmax_2d = nn.Softmax(dim=1)
+        self.conv_layer = nn.Conv2d(inter_channel, out_channel, kernel_size=1,
+                                    stride=1)
+        
         
         
     def forward(self,x):
@@ -140,11 +146,13 @@ class NonLocalLayer(nn.Module):
         g_x = g_x.permute(0, 2, 1 )
 
         fg = torch.matmul(f_x, g_x)
-        fg = self.softmax_2d(fg)
+        fg = F.softmax(fg)
 
         h_x = self.h(x).view(batch_size, self.inter_channel, -1)
-        fgh = torch.matmul(fg, h_x)
+        fgh = torch.matmul(fg, h_x).view(batch_size,  self.inter_channel,
+                                         *x.size()[2:])
 
+        fgh = self.conv_layer(fgh)
         return fgh + x
 
     
@@ -154,6 +162,10 @@ class Reconstruction(nn.Module):
 
         super(Reconstruction, self).__init__()
 
+        self.input_channel = input_channel
+        self.input_width = input_width
+        self.input_height = input_height
+        
         self.networks = nn.Sequential(
             nn.Linear(10*16, 512),
             nn.ReLU(inplace = True),
@@ -178,7 +190,7 @@ class Reconstruction(nn.Module):
             
         masked = masked.index_select(dim=0, index=Variable(max_length_indices.squeeze(1).data))
         t = (x * masked[:, :, None, None]).view(x.size(0), -1)
-        reconstructions = self.reconstraction_layers(t)
+        reconstructions = self.networks(t)
         reconstructions = reconstructions.view(-1, self.input_channel, self.input_width, self.input_height)
         return reconstructions, masked
         
