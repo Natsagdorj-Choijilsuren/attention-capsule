@@ -29,7 +29,7 @@ class MnistSCAN(nn.Module):
 
         self.convlayer = ConvLayer(input_channel=1, out_channel=256,
                                    kernel_size=9, stride=1)
-
+        
         self.non_local = NonLocalLayer(in_channel=256, inter_channel=128,
                                        out_channel=256)
         
@@ -47,7 +47,7 @@ class MnistSCAN(nn.Module):
         
     def forward(self, x):
 
-        conv_out = self.convlayer(x)
+        conv_out = F.relu(self.convlayer(x))
         nonlocal_out = self.non_local(conv_out)
 
         prime_out = self.prime_layer(nonlocal_out)
@@ -83,16 +83,15 @@ class MnistSCAN(nn.Module):
          loss = self.mse_loss(reconstructions.view(reconstructions.size(0), -1),
                               data.view(reconstructions.size(0), -1))
          
-         return loss * 0.0005
+         return loss * 0.005
 
 
 def train(train_loader, optimizer, model):
 
-
     
     for i,  (data, target) in enumerate(train_loader):
 
-        #make one hot         
+        #one hot         
         target = torch.sparse.torch.eye(10).index_select(dim=0, index=target)
         data, target = Variable(data), Variable(target)
 
@@ -116,14 +115,15 @@ def train(train_loader, optimizer, model):
         
         if i % 100 == 0:
 
-            print ('Epoch Number {}: train_accuracy: {} loss: {}'.format(i, correct/float(batch_size), train_loss)
-            )
+            print ('Epoch Number {}: train_accuracy: {} loss: {}'.format(i, correct/float(batch_size), train_loss))
             #print (loss)
 
-def test(test_loader, model):
+            
+            
+def test(test_loader, model, model_path):
 
     model = model.eval()
-
+    
 
 
         
