@@ -88,35 +88,36 @@ class MnistSCAN(nn.Module):
 
 def train(train_loader, optimizer, model):
 
-    
-    for i,  (data, target) in enumerate(train_loader):
 
-        #one hot         
-        target = torch.sparse.torch.eye(10).index_select(dim=0, index=target)
-        data, target = Variable(data), Variable(target)
+    for e in range(10):
+        for i,  (data, target) in enumerate(train_loader):
 
-        batch_size = data.size(0)
+            #one hot         
+            target = torch.sparse.torch.eye(10).index_select(dim=0, index=target)
+            data, target = Variable(data), Variable(target)
+            
+            batch_size = data.size(0)
+            
+            if USE_CUDA:
                 
-        if USE_CUDA:
+                data = data.cuda()
+                target = target.cuda()
+                model = model.cuda()
 
-            data = data.cuda()
-            target = target.cuda()
-            model = model.cuda()
-
-        output, reconstructions, masked = model(data)
-        loss = model.loss(data, output, target, reconstructions)
-
-        loss.backward()
-        optimizer.step()
-
-        correct = sum(np.argmax(masked.data.cpu().numpy(), 1) == np.argmax(target.data.cpu().numpy(), 1))
+            output, reconstructions, masked = model(data)
+            loss = model.loss(data, output, target, reconstructions)
+            
+            loss.backward()
+            optimizer.step()
         
-        train_loss = loss.data
+            correct = sum(np.argmax(masked.data.cpu().numpy(), 1) == np.argmax(target.data.cpu().numpy(), 1))
+            
+            train_loss = loss.data
         
-        if i % 100 == 0:
-
-            print ('Epoch Number {}: train_accuracy: {} loss: {}'.format(i, correct/float(batch_size), train_loss))
-            #print (loss)
+            if i % 100 == 0:
+                
+                print ('Epoch Number {}: train_accuracy: {} loss: {}'.format(i, correct/float(batch_size), train_loss))
+                #print (loss)
 
             
             
@@ -133,7 +134,7 @@ if __name__ == '__main__':
 
     train_loader, test_loader = getMNIST_Loader(batch_size = 100)
 
-    optimizer = torch.optim.Adam(mnist_network.parameters())
+    optimizer = torch.optim.Adam(mnist_network.parameters(), lr=0.0001)
     
     train(train_loader, optimizer, mnist_network)
 
