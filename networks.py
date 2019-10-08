@@ -128,6 +128,8 @@ class NonLocalLayer(nn.Module):
         self.h = nn.Conv2d(in_channel, inter_channel,kernel_size = 1,
                            stride = 1)
 
+        self.alpha = torch.nn.Parameter(torch.zeros(1))
+        
         #self.softmax_2d = nn.Softmax(dim=1)
         self.conv_layer = nn.Conv2d(inter_channel, out_channel, kernel_size=1,
                                     stride=1)
@@ -152,7 +154,7 @@ class NonLocalLayer(nn.Module):
         fgh = torch.matmul(fg, h_x).view(batch_size,  self.inter_channel,
                                          *x.size()[2:])
 
-        fgh = self.conv_layer(fgh)
+        fgh = self.conv_layer(fgh)*self.alpha
         return fgh + x
 
     
