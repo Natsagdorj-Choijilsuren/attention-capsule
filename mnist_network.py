@@ -83,7 +83,7 @@ class MnistSCAN(nn.Module):
          loss = self.mse_loss(reconstructions.view(reconstructions.size(0), -1),
                               data.view(reconstructions.size(0), -1))
          
-         return loss * 0.005
+         return loss * 0.392
 
 
 def train(train_loader, optimizer, model):
