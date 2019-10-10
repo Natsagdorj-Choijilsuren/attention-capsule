@@ -9,7 +9,7 @@ def getMNIST_Loader(batch_size, shuffle=True):
 
     transform = transforms.Compose([
         transforms.ToTensor(),
-        transforms.Normalize((0.1307,), (0.3081,))
+        #transforms.Normalize((0.1307,), (0.3081,))
     ])
     
     train_dataset = datasets.MNIST(root = 'data/mnist', train=True,
