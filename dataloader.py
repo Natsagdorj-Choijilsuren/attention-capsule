@@ -26,6 +26,19 @@ def getMNIST_Loader(batch_size, shuffle=True):
 
 
 
+def getSVH_Loader(batch_size, shuffle=True):
+
+    transform = transforms.Compose([transforms.ToTensor()])
+    
+    train_dataset = datasets.SVHN(root='data/svhn', train=True)
+    test_dataset = datasets.SVHN(root='data/svhn', train=)
     
 
-    
+    train_loader = DataLoader(train_dataset, batch_size=batch_size,
+                              shuffle=shuffle)
+    test_loader = DataLoader(test_dataset, batch_size=batch_size,
+                             shuffle=False)
+
+    return train_loader, test_loader
+
+
