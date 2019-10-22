@@ -153,8 +153,9 @@ def test(test_loader, model, epoch):
         with torch.no_grad():
             loss = model.loss(data, output, target, reconstructions)
 
-            test_loss = loss.data
-
+            test_loss += loss.data
+            write_loss = loss.data
+            
             cor = sum(np.argmax(masked.data.cpu().numpy(), 1) ==
                            np.argmax(target.data.cpu().numpy(), 1))
 
@@ -164,7 +165,7 @@ def test(test_loader, model, epoch):
 
         n_iter = epoch*int(length_data) + i
 
-        writer.add_scalar('Loss/Test', test_loss, n_iter)
+        writer.add_scalar('Loss/Test', write_loss, n_iter)
         writer.add_scalar('Accuracy/Test', cor/float(batch_size), n_iter)
 
     print ('test accuracy: {} test_loss: {}'.format(float(correct)/float(length_data),
