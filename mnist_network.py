@@ -15,11 +15,14 @@ from torch.autograd import Variable
 from dataloader import getMNIST_Loader
 import torch.nn.functional as F
 
+from torch.utils.tensorboard import SummaryWriter
 import numpy as np 
 
 from networks import PrimeCapsuleLayer, DigitCapsuleLayer, ConvLayer, NonLocalLayer, Reconstruction
 
 USE_CUDA = torch.cuda.is_available()
+
+writer = SummaryWriter()
 
 class MnistSCAN(nn.Module):
 
@@ -86,8 +89,10 @@ class MnistSCAN(nn.Module):
          return loss * 0.392
 
 
-def train(train_loader, optimizer, model):
+def train(train_loader, optimizer, model, epoch):
 
+    train_loss = 0.0
+    
     for i,  (data, target) in enumerate(train_loader):
         
         #one hot         
@@ -95,7 +100,8 @@ def train(train_loader, optimizer, model):
         data, target = Variable(data), Variable(target)
             
         batch_size = data.size(0)
-            
+        length_data = len(train_loader.dataset)
+        
         if USE_CUDA:
                 
             data = data.cuda()
@@ -109,30 +115,34 @@ def train(train_loader, optimizer, model):
         optimizer.step()
         
         correct = sum(np.argmax(masked.data.cpu().numpy(), 1) == np.argmax(target.data.cpu().numpy(), 1))
-            
+        
         train_loss = loss.data
+        n_iter = int(length_data)*epoch + i
+        
+        writer.add_scalar('Loss/Train', train_loss, n_iter)
+        writer.add_scalar('Accuracy/Train', correct/float(batch_size), n_iter)
         
         if i % 100 == 0:
                 
-            print ('Epoch Number {}: train_accuracy: {} loss: {}'.format(i, correct/float(batch_size), train_loss))
-            #print (loss)
-
+            print ('Epoch Number {}: train_accuracy: {} loss: {}'.format(i, correct/float(batch_size),
+                                                                         train_loss))
             
             
-def test(test_loader, model):
+def test(test_loader, model, epoch):
 
     model = model.eval()
 
     test_loss = 0.0
     correct = 0
-    
+        
     for i, (test_data, test_target) in enumerate(test_loader):
 
         test_target = torch.sparse.torch.eye(10).index_select(dim=0, index=test_target)
         data, target = Variable(test_data), Variable(test_target)
 
         batch_size = data.size(0)
-
+        length_data = len(test_loader.dataset)
+        
         if USE_CUDA:
             data = data.cuda()
             target = target.cuda()
@@ -143,11 +153,20 @@ def test(test_loader, model):
         with torch.no_grad():
             loss = model.loss(data, output, target, reconstructions)
 
-            test_loss += loss
+            test_loss = loss.data
+
+            cor = sum(np.argmax(masked.data.cpu().numpy(), 1) ==
+                           np.argmax(target.data.cpu().numpy(), 1))
+
+            
             correct += sum(np.argmax(masked.data.cpu().numpy(), 1) ==
                            np.argmax(target.data.cpu().numpy(), 1))
 
-    length_data = len(test_loader.dataset)
+        n_iter = epoch*int(length_data) + i
+
+        writer.add_scalar('Loss/Test', test_loss, n_iter)
+        writer.add_scalar('Accuracy/Test', cor/float(batch_size), n_iter)
+
     print ('test accuracy: {} test_loss: {}'.format(float(correct)/float(length_data),
                                                     float(test_loss)/float(length_data)))
 
@@ -161,6 +180,6 @@ if __name__ == '__main__':
     optimizer = torch.optim.Adam(mnist_network.parameters(), lr=0.0001)
 
     for e in range(10):
-        train(train_loader, optimizer, mnist_network)
-        test(test_loader, mnist_network)
+        train(train_loader, optimizer, mnist_network, e)
+        test(test_loader, mnist_network, e)
     

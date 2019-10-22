@@ -31,7 +31,7 @@ def getSVH_Loader(batch_size, shuffle=True):
     transform = transforms.Compose([transforms.ToTensor()])
     
     train_dataset = datasets.SVHN(root='data/svhn', train=True)
-    test_dataset = datasets.SVHN(root='data/svhn', train=)
+    test_dataset = datasets.SVHN(root='data/svhn', train=False)
     
 
     train_loader = DataLoader(train_dataset, batch_size=batch_size,
